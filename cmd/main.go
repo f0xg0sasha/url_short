@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 
-	"girhub.com/f0xg0sasha/url_short/internal/config"
-	"girhub.com/f0xg0sasha/url_short/internal/storage/psql"
+	"github.com/f0xg0sasha/url_short/internal/config"
+	"github.com/f0xg0sasha/url_short/internal/storage"
 )
 
 func main() {
@@ -18,9 +17,7 @@ func main() {
 	log.Info("start app")
 
 	// Init database
-	db := psql.ConnectionPostgres()
-	x, _ := db.Exec("SELECT * FROM URL")
-	fmt.Println(x)
+	_ = storage.NewStorage()
 
 }
 
