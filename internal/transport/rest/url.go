@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/f0xg0sasha/url_short/internal/domain"
 	"github.com/f0xg0sasha/url_short/internal/storage"
@@ -20,10 +21,12 @@ func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == storage.ErrURLNotFound {
 			http.Error(w, "error", http.StatusNotFound)
+			log.Error(err)
 			return
 		}
 
 		http.Error(w, "error", http.StatusBadRequest)
+		log.Error(err)
 		return
 	}
 
@@ -36,12 +39,14 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 	reqBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusBadRequest)
+		log.Error(err)
 		return
 	}
 
 	err = json.Unmarshal(reqBytes, url)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusBadRequest)
+		log.Error(err)
 		return
 	}
 
@@ -49,10 +54,12 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == storage.ErrUrlExists {
 			http.Error(w, "url already exists", http.StatusBadRequest)
+			log.Error(err)
 			return
 		}
 
 		http.Error(w, "error with saving url"+fmt.Sprintf("%s", err), http.StatusInternalServerError)
+		log.Error(err)
 		return
 	}
 
@@ -61,6 +68,7 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		http.Error(w, "error with creating response", http.StatusInternalServerError)
+		log.Error(err)
 		return
 	}
 
@@ -77,12 +85,12 @@ func (h *Handler) DeleteURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == storage.ErrURLNotFound {
 			http.Error(w, "url not found", http.StatusNotFound)
-			log.Print(err)
+			log.Error(err)
 			return
 		}
 
 		http.Error(w, "error with deleting url", http.StatusInternalServerError)
-		log.Print(err)
+		log.Error(err)
 		return
 	}
 }

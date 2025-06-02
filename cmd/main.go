@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log/slog"
 	"net/http"
 	"os"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/f0xg0sasha/url_short/internal/service"
 	"github.com/f0xg0sasha/url_short/internal/storage"
 	"github.com/f0xg0sasha/url_short/internal/transport/rest"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -16,7 +16,6 @@ func main() {
 	configs := config.NewConfig()
 
 	// Init logger
-	log := setupLogger(configs.Env)
 	log.Info("start app")
 
 	//repositroy
@@ -25,30 +24,24 @@ func main() {
 
 	// Init handlers
 	handler := rest.NewHandler(urlService)
-	log.Info("start http server", slog.String("addr", configs.HTTPServer.Address))
 
 	// Run server
 	srv := http.Server{
-		Addr:    ":8080",
-		Handler: handler.InitRouter(),
+		Addr:        ":8080",
+		IdleTimeout: configs.HTTPServer.IdleTimeout,
+		ReadTimeout: configs.HTTPServer.Timeout,
+		Handler:     handler.InitRouter(),
 	}
 
-	log.Info("run server", slog.String("addr", srv.Addr))
+	log.Info("run server")
 	if err := srv.ListenAndServe(); err != nil {
-		log.Error("server error", slog.Any("error", err))
+		log.Fatalf("server error: %s", err)
 	}
 }
 
-func setupLogger(env string) *slog.Logger {
-	var log *slog.Logger
-	switch env {
-	case "local":
-		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	case "prod":
-		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	case "dev":
-		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	}
-
-	return log
+func init() {
+	// Log as JSON instead of the default ASCII formatter.
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
 }

@@ -2,7 +2,8 @@ package storage
 
 import (
 	"database/sql"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/f0xg0sasha/url_short/internal/storage/psql"
 )

@@ -1,9 +1,10 @@
 package config
 
 import (
-	"log"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
