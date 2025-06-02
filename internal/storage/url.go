@@ -19,11 +19,13 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 
 	var id int64
 
-	err = stmt.QueryRow(urlToSave, alias).Scan(&id)
+	_, err = stmt.Exec(urlToSave, alias)
 
 	if err != nil {
+		fmt.Println(err)
 		if dbErr, ok := err.(*pq.Error); ok && dbErr.Code == "23505" {
-			return 0, fmt.Errorf("%s: %w", op, ErrUrlExists)
+
+			return 0, ErrUrlExists
 		}
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
@@ -60,6 +62,7 @@ func (s *Storage) DeleteURL(alias string) error {
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
+
 	defer stmt.Close()
 
 	_, err = stmt.Exec(alias)

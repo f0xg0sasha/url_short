@@ -2,6 +2,7 @@ package storage
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/f0xg0sasha/url_short/internal/storage/psql"
 )
@@ -11,6 +12,11 @@ type Storage struct {
 }
 
 func NewStorage() *Storage {
-	db := psql.ConnectionPostgres()
+	db, err := psql.ConnectionPostgres()
+
+	if err != nil {
+		log.Fatal("no connected database")
+	}
+
 	return &Storage{db: db}
 }
