@@ -30,6 +30,7 @@ func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Info(fmt.Sprintf("succses redirect [alias]: (%s)", alias))
 	http.Redirect(w, r, OriginalURL, http.StatusMovedPermanently)
 }
 
@@ -72,6 +73,7 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Info(fmt.Sprintf("add new [url]: (%s), [alias]: (%s)", url.URL, url.Alias))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(resp)
@@ -93,4 +95,8 @@ func (h *Handler) DeleteURL(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 		return
 	}
+
+	log.Info(fmt.Sprintf("[alias]: (%s) - was deleted", alias))
+	w.WriteHeader(http.StatusNoContent)
+
 }

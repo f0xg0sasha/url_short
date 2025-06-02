@@ -17,8 +17,6 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 	}
 	defer stmt.Close()
 
-	var id int64
-
 	_, err = stmt.Exec(urlToSave, alias)
 
 	if err != nil {
@@ -27,6 +25,13 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 
 			return 0, ErrUrlExists
 		}
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	var id int64
+
+	err = s.db.QueryRow("SELECT id FROM url WHERE alias = $1", alias).Scan(&id)
+	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
