@@ -1,20 +1,25 @@
 package rest
 
-import "github.com/gorilla/mux"
+import (
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
+)
 
 type URLService interface {
-	SaveURL(urlToSave string, alias string) (int64, error)
-	GetURL(alias string) (string, error)
-	DeleteURL(alias string) error
+	Fetch(alias string) (string, error)
+	Create(url string, alias string) (int64, error)
+	Delete(alias string) error
 }
 
 type Handler struct {
+	log        *logrus.Logger
 	urlService URLService
 }
 
-func NewHandler(u URLService) *Handler {
+func NewHandler(log *logrus.Logger, urlService URLService) *Handler {
 	return &Handler{
-		urlService: u,
+		log:        log,
+		urlService: urlService,
 	}
 }
 
@@ -23,9 +28,9 @@ func (h *Handler) InitRouter() *mux.Router {
 
 	url := r.PathPrefix("/url").Subrouter()
 	{
-		url.HandleFunc("/{alias:[a-z]+}", h.GetURL).Methods("GET")
+		url.HandleFunc("/{alias:[a-z0-9]+}", h.GetURL).Methods("GET")
 		url.HandleFunc("/", h.CreateURL).Methods("POST")
-		url.HandleFunc("/{alias:[a-z]+}", h.DeleteURL).Methods("DELETE")
+		url.HandleFunc("/{alias:[a-z0-9]+}", h.DeleteURL).Methods("DELETE")
 	}
 
 	return r

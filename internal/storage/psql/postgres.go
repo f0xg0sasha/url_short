@@ -8,8 +8,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var dataSourceName = "postgres://postgres:" + "qwerty" + "@localhost:5432/postgres?sslmode=disable"
+
 func ConnectionPostgres() (*sql.DB, error) {
-	db, err := sql.Open("postgres", "postgres://postgres:sanya228@localhost:5432/postgres?sslmode=disable")
+	db, err := sql.Open("postgres", dataSourceName)
 
 	if err != nil {
 		return nil, err

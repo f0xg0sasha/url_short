@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/f0xg0sasha/url_short/internal/domain"
 	"github.com/f0xg0sasha/url_short/internal/storage"
 	"github.com/gorilla/mux"
@@ -17,20 +15,20 @@ func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	alias := vars["alias"]
 
-	OriginalURL, err := h.urlService.GetURL(alias)
+	OriginalURL, err := h.urlService.Fetch(alias)
 	if err != nil {
 		if err == storage.ErrURLNotFound {
 			http.Error(w, "error", http.StatusNotFound)
-			log.Error(err)
+			h.log.Error(err)
 			return
 		}
 
 		http.Error(w, "error", http.StatusBadRequest)
-		log.Error(err)
+		h.log.Error(err)
 		return
 	}
 
-	log.Info(fmt.Sprintf("succses redirect [alias]: (%s)", alias))
+	h.log.Info(fmt.Sprintf("succses redirect [alias]: (%s)", alias))
 	http.Redirect(w, r, OriginalURL, http.StatusMovedPermanently)
 }
 
@@ -40,27 +38,27 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 	reqBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusBadRequest)
-		log.Error(err)
+		h.log.Error(err)
 		return
 	}
 
 	err = json.Unmarshal(reqBytes, url)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusBadRequest)
-		log.Error(err)
+		h.log.Error(err)
 		return
 	}
 
-	id, err := h.urlService.SaveURL(url.URL, url.Alias)
+	id, err := h.urlService.Create(url.URL, url.Alias)
 	if err != nil {
 		if err == storage.ErrUrlExists {
 			http.Error(w, "url already exists", http.StatusBadRequest)
-			log.Error(err)
+			h.log.Error(err)
 			return
 		}
 
 		http.Error(w, "error with saving url"+fmt.Sprintf("%s", err), http.StatusInternalServerError)
-		log.Error(err)
+		h.log.Error(err)
 		return
 	}
 
@@ -69,11 +67,11 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		http.Error(w, "error with creating response", http.StatusInternalServerError)
-		log.Error(err)
+		h.log.Error(err)
 		return
 	}
 
-	log.Info(fmt.Sprintf("add new [url]: (%s), [alias]: (%s)", url.URL, url.Alias))
+	h.log.Info(fmt.Sprintf("add new [url]: (%s), [alias]: (%s)", url.URL, url.Alias))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(resp)
@@ -83,20 +81,20 @@ func (h *Handler) DeleteURL(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	alias := vars["alias"]
 
-	err := h.urlService.DeleteURL(alias)
+	err := h.urlService.Delete(alias)
 	if err != nil {
 		if err == storage.ErrURLNotFound {
 			http.Error(w, "url not found", http.StatusNotFound)
-			log.Error(err)
+			h.log.Error(err)
 			return
 		}
 
 		http.Error(w, "error with deleting url", http.StatusInternalServerError)
-		log.Error(err)
+		h.log.Error(err)
 		return
 	}
 
-	log.Info(fmt.Sprintf("[alias]: (%s) - was deleted", alias))
+	h.log.Info(fmt.Sprintf("[alias]: (%s) - was deleted", alias))
 	w.WriteHeader(http.StatusNoContent)
 
 }

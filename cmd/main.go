@@ -6,9 +6,10 @@ import (
 
 	"github.com/f0xg0sasha/url_short/internal/config"
 	"github.com/f0xg0sasha/url_short/internal/service"
+	memcache "github.com/f0xg0sasha/url_short/internal/service/cache"
 	"github.com/f0xg0sasha/url_short/internal/storage"
 	"github.com/f0xg0sasha/url_short/internal/transport/rest"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -16,14 +17,23 @@ func main() {
 	configs := config.NewConfig()
 
 	// Init logger
+	log := &logrus.Logger{
+		Level:     logrus.DebugLevel,
+		Out:       os.Stdout,
+		Formatter: &logrus.JSONFormatter{},
+	}
+
 	log.Info("start app")
 
 	//repositroy
 	repository := storage.NewStorage()
-	urlService := service.NewURL(repository)
+
+	// init cache
+	memCache := memcache.NewMemCache(log, repository)
+	svc := service.NewService(memCache)
 
 	// Init handlers
-	handler := rest.NewHandler(urlService)
+	handler := rest.NewHandler(log, svc)
 
 	// Run server
 	srv := http.Server{
@@ -33,15 +43,9 @@ func main() {
 		Handler:     handler.InitRouter(),
 	}
 
-	log.Info("run server")
+	log.Info("run server", configs.HTTPServer.Address)
+
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("server error: %s", err)
 	}
-}
-
-func init() {
-	// Log as JSON instead of the default ASCII formatter.
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
 }
