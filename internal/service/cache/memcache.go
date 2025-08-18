@@ -7,6 +7,7 @@ import (
 
 	"github.com/f0xg0sasha/url_short/internal/service"
 	"github.com/f0xg0sasha/url_short/internal/storage"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,16 +18,25 @@ type URLRepository interface {
 }
 
 type MemCache struct {
-	log   *logrus.Logger
-	cache sync.Map
+	log       *logrus.Logger
+	cache     sync.Map
+	cacheHit  prometheus.Counter
+	cacheMiss prometheus.Counter
 	URLRepository
 }
 
-func NewMemCache(log *logrus.Logger, repo URLRepository) *MemCache {
+func NewMemCache(
+	log *logrus.Logger,
+	repo URLRepository,
+	cacheHit prometheus.Counter,
+	cacheMiss prometheus.Counter,
+) *MemCache {
 	return &MemCache{
 		log:           log,
 		cache:         sync.Map{},
 		URLRepository: repo,
+		cacheHit:      cacheHit,
+		cacheMiss:     cacheMiss,
 	}
 }
 
@@ -34,6 +44,7 @@ func (m *MemCache) Get(alias string) (string, error) {
 	fmt.Println(alias)
 	v, found := m.cache.Load(alias)
 	if found {
+		m.cacheHit.Inc()
 		m.log.Info(m.log.WithFields(
 			logrus.Fields{
 				"message": "cache hit",
@@ -58,6 +69,7 @@ func (m *MemCache) Get(alias string) (string, error) {
 		fmt.Println(m)
 	}
 
+	m.cacheMiss.Inc()
 	m.log.Info(m.log.WithFields(
 		logrus.Fields{
 			"message": "cache miss",
