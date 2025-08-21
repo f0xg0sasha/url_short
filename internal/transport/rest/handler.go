@@ -1,14 +1,16 @@
 package rest
 
 import (
+	"context"
+
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
 type URLService interface {
-	Fetch(alias string) (string, error)
-	Create(url string, alias string) (int64, error)
-	Delete(alias string) error
+	Fetch(ctx context.Context, alias string) (string, error)
+	Create(ctx context.Context, url string, alias string) (int64, error)
+	Delete(ctx context.Context, alias string) error
 }
 
 type Handler struct {

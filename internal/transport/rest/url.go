@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +16,7 @@ func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	alias := vars["alias"]
 
-	OriginalURL, err := h.urlService.Fetch(alias)
+	OriginalURL, err := h.urlService.Fetch(context.Background(), alias)
 	if err != nil {
 		if err == storage.ErrURLNotFound {
 			http.Error(w, "error", http.StatusNotFound)
@@ -49,7 +50,7 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.urlService.Create(url.URL, url.Alias)
+	id, err := h.urlService.Create(context.Background(), url.URL, url.Alias)
 	if err != nil {
 		if err == storage.ErrUrlExists {
 			http.Error(w, "url already exists", http.StatusBadRequest)
@@ -81,7 +82,7 @@ func (h *Handler) DeleteURL(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	alias := vars["alias"]
 
-	err := h.urlService.Delete(alias)
+	err := h.urlService.Delete(context.Background(), alias)
 	if err != nil {
 		if err == storage.ErrURLNotFound {
 			http.Error(w, "url not found", http.StatusNotFound)

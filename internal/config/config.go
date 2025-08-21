@@ -12,6 +12,13 @@ import (
 type Config struct {
 	Env        string
 	HTTPServer HTTPServer `yaml:"http_server"`
+	RedisDB    RedisDB    `yaml:"redis_db"`
+}
+
+type RedisDB struct {
+	Address      string `yaml:"address" env-default:"localhost:6379"`
+	PoolSize     int    `yaml:"pool_size" env-default:"100"`
+	MinIdleConns int    `yaml:"min_idle_conns" env-default:"30"`
 }
 
 type HTTPServer struct {

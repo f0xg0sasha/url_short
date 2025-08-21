@@ -1,8 +1,10 @@
 package service
 
+import "context"
+
 type Item struct {
-	Alias string
 	URL   string
+	Alias string
 }
 
 type Service struct {
@@ -10,9 +12,9 @@ type Service struct {
 }
 
 type CacheRepository interface {
-	Store(item Item) (int64, error)
-	Get(alias string) (string, error)
-	Delete(alias string) error
+	Store(ctx context.Context, item Item) (int64, error)
+	Get(ctx context.Context, alias string) (string, error)
+	Delete(ctx context.Context, alias string) error
 }
 
 func NewService(repo CacheRepository) *Service {

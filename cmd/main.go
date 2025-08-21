@@ -1,16 +1,19 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/f0xg0sasha/url_short/internal/config"
 	"github.com/f0xg0sasha/url_short/internal/service"
-	memcache "github.com/f0xg0sasha/url_short/internal/service/cache"
+	"github.com/f0xg0sasha/url_short/internal/service/cache"
 	"github.com/f0xg0sasha/url_short/internal/storage"
 	"github.com/f0xg0sasha/url_short/internal/transport/rest"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,6 +34,9 @@ func init() {
 }
 
 func main() {
+	// Init context
+	ctx := context.Background()
+
 	// Init config
 	configs := config.NewConfig()
 
@@ -46,9 +52,23 @@ func main() {
 	//repositroy
 	repository := storage.NewStorage()
 
+	// init redis
+	fmt.Println(configs)
+	fmt.Println(configs.RedisDB.Address)
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     configs.RedisDB.Address,
+		Password: "",
+		DB:       0,
+	})
+
+	_, err := rdb.Ping(ctx).Result()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// init cache
-	memCache := memcache.NewMemCache(log, repository, cacheHit, cacheMiss)
-	svc := service.NewService(memCache)
+	cache := cache.NewCache(log, rdb, repository, cacheHit, cacheMiss)
+	svc := service.NewService(cache)
 
 	// Init handlers
 	handler := rest.NewHandler(log, svc)

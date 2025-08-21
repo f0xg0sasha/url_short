@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -8,7 +9,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
+func (s *Storage) SaveURL(ctx context.Context, urlToSave string, alias string) (int64, error) {
 	const op = "storage.SaveURL"
 
 	stmt, err := s.db.Prepare(`INSERT INTO url (url, alias) VALUES ($1, $2)`)
@@ -30,7 +31,7 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 
 	var id int64
 
-	err = s.db.QueryRow("SELECT id FROM url WHERE alias = $1", alias).Scan(&id)
+	err = s.db.QueryRowContext(ctx, "SELECT id FROM url WHERE alias = $1", alias).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
@@ -38,7 +39,7 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 	return id, nil
 }
 
-func (s *Storage) GetURL(alias string) (string, error) {
+func (s *Storage) GetURL(ctx context.Context, alias string) (string, error) {
 	const op = "storage.GetURL"
 
 	stmt, err := s.db.Prepare("SELECT url FROM url WHERE alias = $1")
@@ -48,7 +49,7 @@ func (s *Storage) GetURL(alias string) (string, error) {
 	defer stmt.Close()
 
 	var resURL string
-	err = stmt.QueryRow(alias).Scan(&resURL)
+	err = stmt.QueryRowContext(ctx, alias).Scan(&resURL)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -60,7 +61,7 @@ func (s *Storage) GetURL(alias string) (string, error) {
 	return resURL, nil
 }
 
-func (s *Storage) DeleteURL(alias string) error {
+func (s *Storage) DeleteURL(ctx context.Context, alias string) error {
 	const op = "storage.DeleteURL"
 
 	stmt, err := s.db.Prepare("DELETE FROM url WHERE alias = $1")
@@ -70,7 +71,7 @@ func (s *Storage) DeleteURL(alias string) error {
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(alias)
+	_, err = stmt.ExecContext(ctx, alias)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
